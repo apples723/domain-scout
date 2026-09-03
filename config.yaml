@@ -1,0 +1,34 @@
+scanner:
+  # Only one scan job is allowed to run at a time.
+  job_concurrency: 1
+
+  # Concurrency inside that single job.
+  # Set to 1 for strictly serial network requests, but it will be much slower.
+  worker_concurrency: 40
+
+  request_timeout_seconds: 2.5
+  connect_timeout_seconds: 1.0
+  dns_timeout_seconds: 1.0
+  max_body_bytes: 65536
+  user_agent: "DomainScout/1.0"
+
+  # Avoid re-checking recently tested domains.
+  cache_ttl_seconds: 3600
+
+  # Try HTTPS first, then HTTP if HTTPS fails.
+  schemes:
+    - https
+    - http
+
+  # A page is considered "active HTML" if the response has an HTML content type
+  # and a non-empty body. Redirects are followed.
+  follow_redirects: true
+
+storage:
+  sqlite_path: "./data/domain-scout.db"
+
+input:
+  keywords_file: "./keywords.txt"
+
+output:
+  results_file: "./data/results.jsonl"

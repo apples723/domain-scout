@@ -1,0 +1,31 @@
+# Version control
+.git/
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env
+
+# Scan artifacts / generated data
+data/*.db
+data/*.sqlite
+data/*.sqlite3
+data/*.jsonl
+
+# Docs / meta not needed in the image
+README.md
+.dockerignore
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

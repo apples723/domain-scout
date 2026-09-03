@@ -1,0 +1,9 @@
+services:
+  domain-scout:
+    build: .
+    container_name: domain-scout
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - ./keywords.txt:/app/keywords.txt:ro
+      - ./data:/app/data
+    command: ["--tld", "com"]

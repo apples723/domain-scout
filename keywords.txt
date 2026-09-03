@@ -1,0 +1,10 @@
+claude
+dev
+jim
+bob
+sally
+grant
+isu
+denver
+colorado
+monorepo
