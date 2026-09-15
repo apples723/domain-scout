@@ -1,9 +1,31 @@
+x-common: &common
+  build: .
+  volumes:
+    - ./config.yaml:/app/config.yaml:ro
+    - ./keywords.txt:/app/keywords.txt:ro
+    - ./data:/app/data
+
 services:
-  domain-scout:
-    build: .
-    container_name: domain-scout
-    volumes:
-      - ./config.yaml:/app/config.yaml:ro
-      - ./keywords.txt:/app/keywords.txt:ro
-      - ./data:/app/data
+  web:
+    <<: *common
+    container_name: domain-scout-web
+    # Bound to localhost. There is no authentication, so do not publish this
+    # broadly without putting a proxy with auth in front of it.
+    ports:
+      - "127.0.0.1:8000:8000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      start_period: 5s
+      retries: 3
+
+  # On-demand CLI against the same database, so CLI runs appear in the web history.
+  #   docker compose run --rm cli --tld com,net
+  cli:
+    <<: *common
+    profiles: ["cli"]
+    entrypoint: ["python", "scanner.py"]
     command: ["--tld", "com"]

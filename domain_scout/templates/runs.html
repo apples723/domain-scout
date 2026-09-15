@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% set nav = 'history' %}
+{% block title %}History · Domain Scout{% endblock %}
+
+{% block body %}
+<h1>Previous runs</h1>
+<p class="sub">
+  {{ total }} run{{ '' if total == 1 else 's' }} recorded. Expand a run for a quick
+  look at its domains, or open the summary page for the full findings and CSV export.
+</p>
+
+<div class="card" style="padding:6px 14px">
+  {% if not runs %}
+    <p class="empty">No runs yet. <a href="/">Start a scan</a> to get going.</p>
+  {% else %}
+  <table>
+    <thead>
+      <tr>
+        <th>Run</th>
+        <th>Started</th>
+        <th>TLDs</th>
+        <th class="num">Domains</th>
+        <th class="num">Active</th>
+        <th class="num">Cached</th>
+        <th class="num">Elapsed</th>
+        <th>Status</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for run in runs %}
+      <tr>
+        <td><a href="/runs/{{ run.id }}" class="mono">#{{ run.id }}</a></td>
+        <td>{{ (run.started_at or run.created_at) | ts }}</td>
+        <td class="mono">{{ run.tlds | join(', ') }}</td>
+        <td class="num">
+          {% if run.is_active %}{{ run.completed }}/{{ run.total }}
+          {% else %}{{ run.completed }}{% endif %}
+        </td>
+        <td class="num">{{ run.active_count }}</td>
+        <td class="num">{{ run.cache_hits }}</td>
+        <td class="num">{{ run.elapsed_ms | duration }}</td>
+        <td><span class="badge {{ run.status }}">{{ run.status }}</span></td>
+        <td><a href="/runs/{{ run.id }}" class="btn secondary sm">Summary</a></td>
+      </tr>
+      <tr class="expand-row">
+        <td colspan="9">
+          <details class="expand">
+            <summary>Domains &amp; findings</summary>
+            <div class="expand-body">
+              {% if not run.quick_results %}
+                <p class="hint" style="margin:0">
+                  {% if run.is_active %}Waiting for the first results…
+                  {% else %}No results recorded for this run.{% endif %}
+                </p>
+              {% else %}
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Domain</th>
+                      <th>Resolved</th>
+                      <th>Active</th>
+                      <th class="num">Status</th>
+                      <th>Server</th>
+                      <th>Provider</th>
+                      <th>Title</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for r in run.quick_results %}
+                    <tr>
+                      <td class="mono">{{ r.domain }}</td>
+                      <td class="{{ 'yes' if r.resolved else 'no' }}">{{ 'yes' if r.resolved else 'no' }}</td>
+                      <td class="{{ 'yes' if r.active_html else 'no' }}">{{ 'yes' if r.active_html else 'no' }}</td>
+                      <td class="num">{{ r.status or '-' }}</td>
+                      <td>{{ r.server_family or '-' }}</td>
+                      <td>{{ r.provider or '-' }}</td>
+                      <td class="trunc" title="{{ r.title or '' }}">{{ r.title or '-' }}</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+                <div class="actions" style="margin-top:12px">
+                  <a href="/runs/{{ run.id }}" class="btn sm">Open full summary</a>
+                  {% if run.completed > run.quick_results | length %}
+                    <span class="hint">
+                      Showing {{ run.quick_results | length }} of {{ run.completed }}
+                      domains, most active first.
+                    </span>
+                  {% endif %}
+                </div>
+              {% endif %}
+            </div>
+          </details>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</div>
+
+{% if has_prev or has_next %}
+<div class="pager">
+  {% if has_prev %}<a href="/runs?page={{ page - 1 }}" class="btn secondary sm">← Newer</a>{% endif %}
+  <span class="hint">Page {{ page }} of {{ ((total - 1) // page_size) + 1 }}</span>
+  {% if has_next %}<a href="/runs?page={{ page + 1 }}" class="btn secondary sm">Older →</a>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

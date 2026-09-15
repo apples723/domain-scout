@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% set nav = 'new' %}
+{% block title %}New scan · Domain Scout{% endblock %}
+
+{% block body %}
+<h1>New scan</h1>
+<p class="sub">
+  Every keyword is paired with every TLD, and each resulting domain is checked
+  concurrently for DNS resolution and a live HTML response.
+</p>
+
+{% if current_run_id %}
+  <div class="banner">
+    Run #{{ current_run_id }} is in progress.
+    {% if queue_depth %}{{ queue_depth }} more queued.{% endif %}
+    One scan runs at a time, so this submission will queue behind it.
+  </div>
+{% endif %}
+
+<form method="post" action="/runs">
+  <div class="card">
+    <div class="row">
+      <div>
+        <div class="field">
+          <label for="keywords">
+            Keywords
+            <span class="hint">— one per line. Blank lines and # comments ignored.</span>
+          </label>
+          <textarea id="keywords" name="keywords" spellcheck="false"
+                    placeholder="google&#10;facebook&#10;reddit">{{ prefill_keywords }}</textarea>
+          <p class="hint" style="margin:6px 0 0">
+            Prefilled from <span class="mono">{{ keywords_file }}</span>.
+            Editing here does not change that file. Max
+            {{ web.max_keywords_per_run }} keywords per run.
+          </p>
+        </div>
+      </div>
+      <div>
+        <div class="field">
+          <label for="tlds">
+            TLDs <span class="hint">— comma or space separated.</span>
+          </label>
+          <input type="text" id="tlds" name="tlds" value="com"
+                 placeholder="com, net, app" spellcheck="false" required>
+          <p class="hint" style="margin:6px 0 0">
+            Each keyword is checked against every TLD listed. Max
+            {{ web.max_tlds_per_run }} TLDs per run.
+          </p>
+        </div>
+        <div class="field">
+          <label class="check">
+            <input type="checkbox" name="force" value="true">
+            Bypass cache
+          </label>
+          <p class="hint" style="margin:6px 0 0">
+            Re-check every domain instead of reusing recent results.
+          </p>
+        </div>
+        <button type="submit">Start scan</button>
+      </div>
+    </div>
+  </div>
+</form>
+
+<p class="sub" style="margin:0">
+  Active and available are different questions. Domain Scout reports whether a
+  domain resolves and serves HTML — not whether it can be registered. For that,
+  check a registrar or WHOIS/RDAP.
+</p>
+{% endblock %}

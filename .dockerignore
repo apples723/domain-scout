@@ -17,6 +17,8 @@ env/
 data/*.db
 data/*.sqlite
 data/*.sqlite3
+data/*-wal
+data/*-shm
 data/*.jsonl
 
 # Docs / meta not needed in the image

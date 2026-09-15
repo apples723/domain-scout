@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% set nav = 'history' %}
+{% block title %}Run #{{ run.id }} · Domain Scout{% endblock %}
+
+{% block head %}
+  {# No progress bar by design: while a run is in flight the page simply reloads. #}
+  {% if run.is_active %}<meta http-equiv="refresh" content="4">{% endif %}
+{% endblock %}
+
+{% block body %}
+<h1>Run #{{ run.id }} <span class="badge {{ run.status }}">{{ run.status }}</span></h1>
+<p class="sub">
+  {{ run.keyword_count }} keyword{{ '' if run.keyword_count == 1 else 's' }}
+  × {{ run.tlds | length }} TLD{{ '' if run.tlds | length == 1 else 's' }}
+  = {{ run.total }} domain{{ '' if run.total == 1 else 's' }}
+</p>
+
+{% if run.deleted_at %}
+  <div class="banner bad">
+    This run is deleted and hidden from the history list. Its data is still in the
+    database.
+    <form method="post" action="/runs/{{ run.id }}/restore" class="inline">
+      <button type="submit" class="btn secondary sm" style="margin-left:8px">Restore</button>
+    </form>
+  </div>
+{% endif %}
+
+{% if run.is_active %}
+  <div class="banner">
+    {% if run.status == 'queued' %}
+      Queued{% if queue_position %} at position {{ queue_position }}{% endif %} —
+      one scan runs at a time.
+    {% else %}
+      Scanning: {{ run.completed }} of {{ run.total }} domains checked.
+    {% endif %}
+    This page reloads automatically.
+  </div>
+{% endif %}
+
+{% if run.error %}
+  <div class="banner bad"><strong>Error:</strong> {{ run.error }}</div>
+{% endif %}
+
+<div class="stats">
+  <div class="stat"><div class="k">Scanned</div><div class="v">{{ breakdown.scanned }}</div></div>
+  <div class="stat"><div class="k">Resolved</div><div class="v">{{ breakdown.resolved }}</div></div>
+  <div class="stat"><div class="k">Active HTML</div><div class="v">{{ breakdown.active }}</div></div>
+  <div class="stat"><div class="k">Cache hits</div><div class="v">{{ breakdown.cache_hits }}</div></div>
+  <div class="stat"><div class="k">Errors</div><div class="v">{{ breakdown.errors }}</div></div>
+  <div class="stat"><div class="k">Elapsed</div><div class="v">{{ run.elapsed_ms | duration }}</div></div>
+</div>
+
+<div class="card" style="margin-top:20px">
+  <div class="kv">
+    <div><div class="k">Status</div><div class="v">{{ run.status }}</div></div>
+    <div><div class="k">TLDs</div><div class="v mono">{{ run.tlds | join(', ') }}</div></div>
+    <div><div class="k">Cache bypassed</div><div class="v">{{ 'yes' if run.force else 'no' }}</div></div>
+    <div><div class="k">Created</div><div class="v">{{ run.created_at | ts }}</div></div>
+    <div><div class="k">Started</div><div class="v">{{ run.started_at | ts }}</div></div>
+    <div><div class="k">Finished</div><div class="v">{{ run.finished_at | ts }}</div></div>
+  </div>
+
+  {% if breakdown.providers or breakdown.server_families %}
+  <div class="kv" style="margin-top:20px">
+    <div>
+      <div class="k">Providers (active only)</div>
+      <div class="tags" style="margin-top:6px">
+        {% for name, count in breakdown.providers.items() %}
+          <span class="badge">{{ name }} · {{ count }}</span>
+        {% else %}<span class="hint">none detected</span>{% endfor %}
+      </div>
+    </div>
+    <div>
+      <div class="k">Server families (active only)</div>
+      <div class="tags" style="margin-top:6px">
+        {% for name, count in breakdown.server_families.items() %}
+          <span class="badge">{{ name }} · {{ count }}</span>
+        {% else %}<span class="hint">none detected</span>{% endfor %}
+      </div>
+    </div>
+    <div>
+      <div class="k">Per TLD</div>
+      <div class="tags" style="margin-top:6px">
+        {% for name, count in breakdown.tlds.items() %}
+          <span class="badge">.{{ name }} · {{ count }}</span>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="actions" style="margin-top:22px">
+    <a href="/runs/{{ run.id }}/export.csv" class="btn">Export CSV</a>
+    <a href="/runs" class="btn secondary">Back to history</a>
+    {% if not run.deleted_at %}
+      <form method="post" action="/runs/{{ run.id }}/delete" class="inline"
+            onsubmit="return confirm('Hide run #{{ run.id }} from history? Data is retained in the database.')">
+        <button type="submit" class="btn danger">Delete run</button>
+      </form>
+    {% endif %}
+  </div>
+</div>
+
+<h2>Findings <span class="hint">({{ results | length }} domain{{ '' if results | length == 1 else 's' }}, most active first)</span></h2>
+<div class="card" style="padding:6px 14px; overflow-x:auto">
+  {% if not results %}
+    <p class="empty">
+      {% if run.is_active %}No results yet.{% else %}No results recorded.{% endif %}
+    </p>
+  {% else %}
+  <table>
+    <thead>
+      <tr>
+        <th>Keyword</th><th>TLD</th><th>Domain</th><th>Resolved</th><th>Active</th>
+        <th class="num">Status</th><th>Server</th><th>Family</th><th>Provider</th>
+        <th>Evidence</th><th>Cached</th><th class="num">ms</th><th>IPs</th>
+        <th>Title</th><th>URL</th><th>Error</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in results %}
+      <tr>
+        <td>{{ r.keyword }}</td>
+        <td class="mono">{{ r.tld }}</td>
+        <td class="mono">{{ r.domain }}</td>
+        <td class="{{ 'yes' if r.resolved else 'no' }}">{{ 'yes' if r.resolved else 'no' }}</td>
+        <td class="{{ 'yes' if r.active_html else 'no' }}">{{ 'yes' if r.active_html else 'no' }}</td>
+        <td class="num">{{ r.status or '-' }}</td>
+        <td class="trunc" title="{{ r.server or '' }}">{{ r.server or '-' }}</td>
+        <td>{{ r.server_family or '-' }}</td>
+        <td>{{ r.provider or '-' }}</td>
+        <td class="mono trunc" title="{{ r.provider_evidence | join(', ') }}">
+          {{ r.provider_evidence | join(', ') or '-' }}</td>
+        <td class="{{ 'yes' if r.cached else 'no' }}">{{ 'yes' if r.cached else 'no' }}</td>
+        <td class="num">{{ r.elapsed_ms }}</td>
+        <td class="mono trunc" title="{{ r.ip_addresses | join(', ') }}">
+          {{ r.ip_addresses | join(', ') or '-' }}</td>
+        <td class="trunc" title="{{ r.title or '' }}">{{ r.title or '-' }}</td>
+        <td class="mono trunc" title="{{ r.url or '' }}">{{ r.url or '-' }}</td>
+        <td class="err trunc" title="{{ r.error or '' }}">{{ r.error or '-' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</div>
+{% endblock %}
