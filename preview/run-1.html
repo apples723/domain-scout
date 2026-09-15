@@ -1,0 +1,641 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Run #1 · Domain Scout</title>
+
+  
+  
+
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #fff; --ink: #1c2024; --muted: #6b7280;
+    --line: #e3e6ea; --accent: #2563eb; --ok: #167c4a; --warn: #9a6700; --bad: #b42318;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  header {
+    background: var(--card); border-bottom: 1px solid var(--line);
+    padding: 0 24px; display: flex; align-items: center; gap: 28px;
+  }
+  header .brand { font-weight: 650; font-size: 16px; padding: 16px 0; }
+  header a { color: var(--muted); text-decoration: none; padding: 16px 0; font-size: 14px; }
+  header a:hover { color: var(--ink); }
+  header a.on { color: var(--accent); box-shadow: inset 0 -2px 0 var(--accent); }
+  main { max-width: 1400px; margin: 0 auto; padding: 28px 24px 64px; }
+  h1 { font-size: 21px; margin: 0 0 4px; }
+  h2 { font-size: 15px; margin: 28px 0 10px; }
+  .sub { color: var(--muted); font-size: 13.5px; margin: 0 0 22px; }
+  .card {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 10px; padding: 20px; margin-bottom: 20px;
+  }
+  label { display: block; font-weight: 600; font-size: 13.5px; margin-bottom: 6px; }
+  .hint { color: var(--muted); font-weight: 400; font-size: 12.5px; }
+  input[type=text], textarea {
+    width: 100%; padding: 9px 11px; border: 1px solid var(--line);
+    border-radius: 7px; font-size: 14px; font-family: inherit; background: #fff;
+  }
+  textarea { min-height: 190px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; resize: vertical; }
+  input:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-color: var(--accent); }
+  .row { display: flex; gap: 20px; flex-wrap: wrap; }
+  .row > * { flex: 1 1 260px; }
+  .field { margin-bottom: 18px; }
+  .check { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+  .check input { width: 16px; height: 16px; }
+  button, .btn {
+    display: inline-block; background: var(--accent); color: #fff; border: 0;
+    padding: 9px 16px; border-radius: 7px; font-size: 14px; font-weight: 550;
+    cursor: pointer; text-decoration: none; font-family: inherit;
+  }
+  button:hover, .btn:hover { filter: brightness(1.08); }
+  .btn.secondary { background: #fff; color: var(--ink); border: 1px solid var(--line); }
+  .btn.danger { background: #fff; color: var(--bad); border: 1px solid #f0c6c2; }
+  .btn.sm { padding: 5px 11px; font-size: 13px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th {
+    text-align: left; font-size: 11.5px; text-transform: uppercase;
+    letter-spacing: .04em; color: var(--muted); font-weight: 600;
+    padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap;
+  }
+  td { padding: 8px 10px; border-bottom: 1px solid #f0f2f4; vertical-align: top; }
+  tbody tr:hover > td { background: #fafbfc; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .trunc { max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 20px;
+    font-size: 11.5px; font-weight: 600; background: #eef1f4; color: var(--muted);
+  }
+  .badge.done { background: #e7f5ee; color: var(--ok); }
+  .badge.running, .badge.queued { background: #fff4dc; color: var(--warn); }
+  .badge.failed, .badge.interrupted { background: #fdeceb; color: var(--bad); }
+  .yes { color: var(--ok); font-weight: 600; }
+  .no { color: var(--muted); }
+  .err { color: var(--bad); }
+  .stats { display: flex; flex-wrap: wrap; gap: 10px; }
+  .stat {
+    background: var(--card); border: 1px solid var(--line); border-radius: 9px;
+    padding: 12px 16px; min-width: 108px;
+  }
+  .stat .k { color: var(--muted); font-size: 11.5px; text-transform: uppercase; letter-spacing: .04em; }
+  .stat .v { font-size: 22px; font-weight: 650; font-variant-numeric: tabular-nums; }
+  details.expand > summary {
+    cursor: pointer; padding: 6px 0; font-size: 13px; color: var(--accent);
+    font-weight: 550; list-style: none; display: inline-flex; align-items: center; gap: 6px;
+  }
+  details.expand > summary::-webkit-details-marker { display: none; }
+  details.expand > summary::before { content: "▸"; font-size: 11px; }
+  details.expand[open] > summary::before { content: "▾"; }
+  .expand-body { padding: 6px 0 14px; }
+  .expand-row > td { background: #fbfcfd; padding-top: 0; }
+  .empty { color: var(--muted); text-align: center; padding: 40px 0; }
+  .kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px 24px; }
+  .kv .k { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+  .kv .v { font-size: 14px; }
+  .pager { display: flex; gap: 10px; align-items: center; margin-top: 18px; font-size: 13.5px; }
+  .banner {
+    border-left: 3px solid var(--accent); background: #eff4ff;
+    padding: 11px 15px; border-radius: 6px; font-size: 13.5px; margin-bottom: 18px;
+  }
+  .banner.bad { border-color: var(--bad); background: #fdeceb; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  form.inline { display: inline; }
+</style>
+</head>
+<body>
+<header>
+  <span class="brand">Domain Scout</span>
+  <a href="index.html" class="">New scan</a>
+  <a href="runs.html" class="on">History</a>
+</header>
+<main>
+<h1>Run #1 <span class="badge done">done</span></h1>
+<p class="sub">
+  10 keywords
+  × 2 TLDs
+  = 20 domains
+</p>
+
+
+
+
+
+
+
+<div class="stats">
+  <div class="stat"><div class="k">Scanned</div><div class="v">20</div></div>
+  <div class="stat"><div class="k">Resolved</div><div class="v">18</div></div>
+  <div class="stat"><div class="k">Active HTML</div><div class="v">16</div></div>
+  <div class="stat"><div class="k">Cache hits</div><div class="v">0</div></div>
+  <div class="stat"><div class="k">Errors</div><div class="v">4</div></div>
+  <div class="stat"><div class="k">Elapsed</div><div class="v">2.11s</div></div>
+</div>
+
+<div class="card" style="margin-top:20px">
+  <div class="kv">
+    <div><div class="k">Status</div><div class="v">done</div></div>
+    <div><div class="k">TLDs</div><div class="v mono">com, net</div></div>
+    <div><div class="k">Cache bypassed</div><div class="v">no</div></div>
+    <div><div class="k">Created</div><div class="v">2026-09-15 16:40:48 UTC</div></div>
+    <div><div class="k">Started</div><div class="v">2026-09-15 16:40:48 UTC</div></div>
+    <div><div class="k">Finished</div><div class="v">2026-09-15 16:40:51 UTC</div></div>
+  </div>
+
+  
+  <div class="kv" style="margin-top:20px">
+    <div>
+      <div class="k">Providers (active only)</div>
+      <div class="tags" style="margin-top:6px">
+        
+          <span class="badge">unknown · 11</span>
+        
+          <span class="badge">cloudflare · 5</span>
+        
+      </div>
+    </div>
+    <div>
+      <div class="k">Server families (active only)</div>
+      <div class="tags" style="margin-top:6px">
+        
+          <span class="badge">other/unknown · 11</span>
+        
+          <span class="badge">nginx · 2</span>
+        
+          <span class="badge">unknown · 2</span>
+        
+          <span class="badge">apache · 1</span>
+        
+      </div>
+    </div>
+    <div>
+      <div class="k">Per TLD</div>
+      <div class="tags" style="margin-top:6px">
+        
+          <span class="badge">.com · 10</span>
+        
+          <span class="badge">.net · 10</span>
+        
+      </div>
+    </div>
+  </div>
+  
+
+  <div class="actions" style="margin-top:22px">
+    <a href="/runs/1/export.csv" class="btn">Export CSV</a>
+    <a href="runs.html" class="btn secondary">Back to history</a>
+    
+      <form method="post" action="/runs/1/delete" class="inline"
+            onsubmit="return confirm('Hide run #1 from history? Data is retained in the database.')">
+        <button type="submit" class="btn danger">Delete run</button>
+      </form>
+    
+  </div>
+</div>
+
+<h2>Findings <span class="hint">(20 domains, most active first)</span></h2>
+<div class="card" style="padding:6px 14px; overflow-x:auto">
+  
+  <table>
+    <thead>
+      <tr>
+        <th>Keyword</th><th>TLD</th><th>Domain</th><th>Resolved</th><th>Active</th>
+        <th class="num">Status</th><th>Server</th><th>Family</th><th>Provider</th>
+        <th>Evidence</th><th>Cached</th><th class="num">ms</th><th>IPs</th>
+        <th>Title</th><th>URL</th><th>Error</th>
+      </tr>
+    </thead>
+    <tbody>
+      
+      <tr>
+        <td>anthropic</td>
+        <td class="mono">com</td>
+        <td class="mono">anthropic.com</td>
+        <td class="yes">yes</td>
+        <td class="yes">yes</td>
+        <td class="num">200</td>
+        <td class="trunc" title="cloudflare">cloudflare</td>
+        <td>other/unknown</td>
+        <td>cloudflare</td>
+        <td class="mono trunc" title="cf-ray, cf-cache-status, server">
+          cf-ray, cf-cache-status, server</td>
+        <td class="no">no</td>
+        <td class="num">112</td>
+        <td class="mono trunc" title="160.79.104.10, 2607:6bc0::10">
+          160.79.104.10, 2607:6bc0::10</td>
+        <td class="trunc" title="Home \ Anthropic">Home \ Anthropic</td>
+        <td class="mono trunc" title="https://www.anthropic.com/">https://www.anthropic.com/</td>
+        <td class="err trunc" title="">-</td>
+      </tr>
+      
+      <tr>
+        <td>anthropic</td>
+        <td class="mono">net</td>
+        <td class="mono">anthropic.net</td>
+        <td class="yes">yes</td>
+        <td class="yes">yes</td>
+        <td class="num">200</td>
+        <td class="trunc" title="Apache">Apache</td>
+        <td>apache</td>
+        <td>-</td>
+        <td class="mono trunc" title="">
+          -</td>
+        <td class="no">no</td>
+        <td class="num">574</td>
+        <td class="mono trunc" title="103.224.182.240">
+          103.224.182.240</td>
+        <td class="trunc" title="">-</td>
+        <td class="mono trunc" title="https://anthropic.net/">https://anthropic.net/</td>
+        <td class="err trunc" title="">-</td>
+      </tr>
+      
+      <tr>
+        <td>claude</td>
+        <td class="mono">com</td>
+        <td class="mono">claude.com</td>
+        <td class="yes">yes</td>
+        <td class="yes">yes</td>
+        <td class="num">200</td>
+        <td class="trunc" title="cloudflare">cloudflare</td>
+        <td>other/unknown</td>
+        <td>cloudflare</td>
+        <td class="mono trunc" title="cf-ray, server">
+          cf-ray, server</td>
+        <td class="no">no</td>
+        <td class="num">167</td>
+        <td class="mono trunc" title="160.79.104.10, 2607:6bc0::10">
+          160.79.104.10, 2607:6bc0::10</td>
+        <td class="trunc" title="">-</td>
+        <td class="mono trunc" title="https://claude.com/">https://claude.com/</td>
+        <td class="err trunc" title="">-</td>
+      </tr>
+      
+      <tr>
+        <td>facebook</td>
+        <td class="mono">com</td>
+        <td class="mono">facebook.com</td>
+        <td class="yes">yes</td>
+        <td class="yes">yes</td>
+        <td class="num">200</td>
+        <td class="trunc" title="">-</td>
+        <td>-</td>
+        <td>-</td>
+        <td class="mono trunc" title="">
+          -</td>
+        <td class="no">no</td>
+        <td class="num">176</td>
+        <td class="mono trunc" title="2a03:2880:f31d:1:face:b00c:0:25de, 57.145.2.1">
+          2a03:2880:f31d:1:face:b00c:0:25de, 57.145.2.1</td>
+        <td class="trunc" title="">-</td>
+        <td class="mono trunc" title="https://www.facebook.com/">https://www.facebook.com/</td>
+        <td class="err trunc" title="">-</td>
+      </tr>
+      
+      <tr>
+        <td>google</td>
+        <td class="mono">com</td>
+        <td class="mono">google.com</td>
+        <td class="yes">yes</td>
+        <td class="yes">yes</td>
+        <td class="num">200</td>
+        <td class="trunc" title="gws">gws</td>
+        <td>other/unknown</td>
+        <td>-</td>
+        <td class="mono trunc" title="">
+          -</td>
+        <td class="no">no</td>
+        <td class="num">109</td>
+        <td class="mono trunc" title="172.253.115.100, 172.253.115.101, 172.253.115.102, 172.253.115.113, 172.253.115.138, 172.253.115.139, 2607:f8b0:4004:c06::64, 2607:f8b0:4004:c06::65, 2607:f8b0:4004:c06::8a, 2607:f8b0:4004:c06::8b">
+          172.253.115.100, 172.253.115.101, 172.253.115.102, 172.253.115.113, 172.253.115.138, 172.253.115.139, 2607:f8b0:4004:c06::64, 2607:f8b0:4004:c06::65, 2607:f8b0:4004:c06::8a, 2607:f8b0:4004:c06::8b</td>
+        <td class="trunc" title="Google">Google</td>
+        <td class="mono trunc" title="https://www.google.com/">https://www.google.com/</td>
+        <td class="err trunc" title="">-</td>
+      </tr>
+      
+      <tr>
+        <td>google</td>
+        <td class="mono">net</td>
+        <td class="mono">google.net</td>
+        <td class="yes">yes</td>
+        <td class="yes">yes</td>
+        <td class="num">200</td>
+        <td class="trunc" title="gws">gws</td>
+        <td>other/unknown</td>
+        <td>-</td>
+        <td class="mono trunc" title="">
+          -</td>
+        <td class="no">no</td>
+        <td class="num">110</td>
+        <td class="mono trunc" title="192.178.218.103, 192.178.218.104, 192.178.218.105, 192.178.218.106, 192.178.218.147, 192.178.218.99, 2607:f8b0:4004:c1b::68, 2607:f8b0:4004:c1b::69, 2607:f8b0:4004:c1b::6a, 2607:f8b0:4004:c1b::93">
+          192.178.218.103, 192.178.218.104, 192.178.218.105, 192.178.218.106, 192.178.218.147, 192.178.218.99, 2607:f8b0:4004:c1b::68, 2607:f8b0:4004:c1b::69, 2607:f8b0:4004:c1b::6a, 2607:f8b0:4004:c1b::93</td>
+        <td class="trunc" title="Google">Google</td>
+        <td class="mono trunc" title="https://www.google.com/">https://www.google.com/</td>
+        <td class="err trunc" title="">-</td>
+      </tr>
+      
+      <tr>
+        <td>grant</td>
+        <td class="mono">com</td>
+        <td class="mono">grant.com</td>
+        <td class="yes">yes</td>
+        <td class="yes">yes</td>
+        <td class="num">200</td>
+        <td class="trunc" title="nginx + Phusion Passenger(R) 6.2.0">nginx + Phusion Passenger(R) 6.2.0</td>
+        <td>nginx</td>
+        <td>-</td>
+        <td class="mono trunc" title="">
+          -</td>
+        <td class="no">no</td>
+        <td class="num">656</td>
+        <td class="mono trunc" title="2600:1f14:ea2:fa00:a108:1e54:63b2:6ef4, 2600:1f14:ea2:fa01:ad3:3155:28c9:39c1, 52.34.121.69, 54.148.233.179">
+          2600:1f14:ea2:fa00:a108:1e54:63b2:6ef4, 2600:1f14:ea2:fa01:ad3:3155:28c9:39c1, 52.34.121.69, 54.148.233.179</td>
+        <td class="trunc" title="grant.com | Venture">grant.com | Venture</td>
+        <td class="mono trunc" title="https://venture.com/domains/grant.com">https://venture.com/domains/grant.com</td>
+        <td class="err trunc" title="">-</td>
+      </tr>
+      
+      <tr>
+        <td>grant</td>
+        <td class="mono">net</td>
+        <td class="mono">grant.net</td>
+        <td class="yes">yes</td>
+        <td class="yes">yes</td>
+        <td class="num">200</td>
+        <td class="trunc" title="Caddy">Caddy</td>
+        <td>other/unknown</td>
+        <td>-</td>
+        <td class="mono trunc" title="">
+          -</td>
+        <td class="no">no</td>
+        <td class="num">151</td>
+        <td class="mono trunc" title="54.235.96.128">
+          54.235.96.128</td>
+        <td class="trunc" title="grant.net">grant.net</td>
+        <td class="mono trunc" title="http://www.grant.net/">http://www.grant.net/</td>
+        <td class="err trunc" title="">-</td>
+      </tr>
+      
+      <tr>
+        <td>monorepo</td>
+        <td class="mono">com</td>
+        <td class="mono">monorepo.com</td>
+        <td class="yes">yes</td>
+        <td class="yes">yes</td>
+        <td class="num">200</td>
+        <td class="trunc" title="cloudflare">cloudflare</td>
+        <td>other/unknown</td>
+        <td>cloudflare</td>
+        <td class="mono trunc" title="cf-ray, cf-cache-status, server">
+          cf-ray, cf-cache-status, server</td>
+        <td class="no">no</td>
+        <td class="num">1268</td>
+        <td class="mono trunc" title="13.223.25.84, 2600:1f18:4ae:c605:dd5d:b838:5816:d7fb, 2600:1f18:4ae:c606:78d4:4260:db4e:aeee, 54.243.117.197">
+          13.223.25.84, 2600:1f18:4ae:c605:dd5d:b838:5816:d7fb, 2600:1f18:4ae:c606:78d4:4260:db4e:aeee, 54.243.117.197</td>
+        <td class="trunc" title="MonoRepo.com is for sale | HugeDomains">MonoRepo.com is for sale | HugeDomains</td>
+        <td class="mono trunc" title="https://www.hugedomains.com/domain_profile.cfm?d=monorepo.com">https://www.hugedomains.com/domain_profile.cfm?d=monorepo.com</td>
+        <td class="err trunc" title="">-</td>
+      </tr>
+      
+      <tr>
+        <td>monorepo</td>
+        <td class="mono">net</td>
+        <td class="mono">monorepo.net</td>
+        <td class="yes">yes</td>
+        <td class="yes">yes</td>
+        <td class="num">200</td>
+        <td class="trunc" title="">-</td>
+        <td>-</td>
+        <td>-</td>
+        <td class="mono trunc" title="">
+          -</td>
+        <td class="no">no</td>
+        <td class="num">1027</td>
+        <td class="mono trunc" title="103.42.108.46">
+          103.42.108.46</td>
+        <td class="trunc" title="Domain Parked With VentraIP Australia">Domain Parked With VentraIP Australia</td>
+        <td class="mono trunc" title="http://monorepo.net/">http://monorepo.net/</td>
+        <td class="err trunc" title="">-</td>
+      </tr>
+      
+      <tr>
+        <td>openai</td>
+        <td class="mono">com</td>
+        <td class="mono">openai.com</td>
+        <td class="yes">yes</td>
+        <td class="yes">yes</td>
+        <td class="num">403</td>
+        <td class="trunc" title="cloudflare">cloudflare</td>
+        <td>other/unknown</td>
+        <td>cloudflare</td>
+        <td class="mono trunc" title="cf-ray, server">
+          cf-ray, server</td>
+        <td class="no">no</td>
+        <td class="num">41</td>
+        <td class="mono trunc" title="104.18.33.45, 172.64.154.211">
+          104.18.33.45, 172.64.154.211</td>
+        <td class="trunc" title="">-</td>
+        <td class="mono trunc" title="https://openai.com/">https://openai.com/</td>
+        <td class="err trunc" title="">-</td>
+      </tr>
+      
+      <tr>
+        <td>reddit</td>
+        <td class="mono">com</td>
+        <td class="mono">reddit.com</td>
+        <td class="yes">yes</td>
+        <td class="yes">yes</td>
+        <td class="num">403</td>
+        <td class="trunc" title="snooserv">snooserv</td>
+        <td>other/unknown</td>
+        <td>-</td>
+        <td class="mono trunc" title="">
+          -</td>
+        <td class="no">no</td>
+        <td class="num">67</td>
+        <td class="mono trunc" title="151.101.1.140, 151.101.129.140, 151.101.193.140, 151.101.65.140, 2a04:4e42:200::396, 2a04:4e42:400::396, 2a04:4e42:600::396, 2a04:4e42::396">
+          151.101.1.140, 151.101.129.140, 151.101.193.140, 151.101.65.140, 2a04:4e42:200::396, 2a04:4e42:400::396, 2a04:4e42:600::396, 2a04:4e42::396</td>
+        <td class="trunc" title="">-</td>
+        <td class="mono trunc" title="https://www.reddit.com/">https://www.reddit.com/</td>
+        <td class="err trunc" title="">-</td>
+      </tr>
+      
+      <tr>
+        <td>reddit</td>
+        <td class="mono">net</td>
+        <td class="mono">reddit.net</td>
+        <td class="yes">yes</td>
+        <td class="yes">yes</td>
+        <td class="num">403</td>
+        <td class="trunc" title="cloudflare">cloudflare</td>
+        <td>other/unknown</td>
+        <td>cloudflare</td>
+        <td class="mono trunc" title="cf-ray, server">
+          cf-ray, server</td>
+        <td class="no">no</td>
+        <td class="num">77</td>
+        <td class="mono trunc" title="52.20.84.62">
+          52.20.84.62</td>
+        <td class="trunc" title="Just a moment...">Just a moment...</td>
+        <td class="mono trunc" title="https://domains.atom.com/lpd/name/reddit.net">https://domains.atom.com/lpd/name/reddit.net</td>
+        <td class="err trunc" title="">-</td>
+      </tr>
+      
+      <tr>
+        <td>sally</td>
+        <td class="mono">com</td>
+        <td class="mono">sally.com</td>
+        <td class="yes">yes</td>
+        <td class="yes">yes</td>
+        <td class="num">200</td>
+        <td class="trunc" title="nginx">nginx</td>
+        <td>nginx</td>
+        <td>-</td>
+        <td class="mono trunc" title="">
+          -</td>
+        <td class="no">no</td>
+        <td class="num">365</td>
+        <td class="mono trunc" title="71.19.145.47">
+          71.19.145.47</td>
+        <td class="trunc" title="Sally Applin">Sally Applin</td>
+        <td class="mono trunc" title="https://sally.com/wiki">https://sally.com/wiki</td>
+        <td class="err trunc" title="">-</td>
+      </tr>
+      
+      <tr>
+        <td>wikipedia</td>
+        <td class="mono">com</td>
+        <td class="mono">wikipedia.com</td>
+        <td class="yes">yes</td>
+        <td class="yes">yes</td>
+        <td class="num">200</td>
+        <td class="trunc" title="ATS/9.2.15">ATS/9.2.15</td>
+        <td>other/unknown</td>
+        <td>-</td>
+        <td class="mono trunc" title="">
+          -</td>
+        <td class="no">no</td>
+        <td class="num">58</td>
+        <td class="mono trunc" title="208.80.154.232, 2620:0:861:ed1a::9">
+          208.80.154.232, 2620:0:861:ed1a::9</td>
+        <td class="trunc" title="Wikipedia">Wikipedia</td>
+        <td class="mono trunc" title="https://www.wikipedia.org/">https://www.wikipedia.org/</td>
+        <td class="err trunc" title="">-</td>
+      </tr>
+      
+      <tr>
+        <td>wikipedia</td>
+        <td class="mono">net</td>
+        <td class="mono">wikipedia.net</td>
+        <td class="yes">yes</td>
+        <td class="yes">yes</td>
+        <td class="num">200</td>
+        <td class="trunc" title="ATS/9.2.15">ATS/9.2.15</td>
+        <td>other/unknown</td>
+        <td>-</td>
+        <td class="mono trunc" title="">
+          -</td>
+        <td class="no">no</td>
+        <td class="num">55</td>
+        <td class="mono trunc" title="208.80.154.232, 2620:0:861:ed1a::9">
+          208.80.154.232, 2620:0:861:ed1a::9</td>
+        <td class="trunc" title="Wikipedia">Wikipedia</td>
+        <td class="mono trunc" title="https://www.wikipedia.org/">https://www.wikipedia.org/</td>
+        <td class="err trunc" title="">-</td>
+      </tr>
+      
+      <tr>
+        <td>claude</td>
+        <td class="mono">net</td>
+        <td class="mono">claude.net</td>
+        <td class="yes">yes</td>
+        <td class="no">no</td>
+        <td class="num">-</td>
+        <td class="trunc" title="">-</td>
+        <td>-</td>
+        <td>-</td>
+        <td class="mono trunc" title="">
+          -</td>
+        <td class="no">no</td>
+        <td class="num">2104</td>
+        <td class="mono trunc" title="122.199.32.135">
+          122.199.32.135</td>
+        <td class="trunc" title="">-</td>
+        <td class="mono trunc" title="">-</td>
+        <td class="err trunc" title="http: ConnectionTimeoutError">http: ConnectionTimeoutError</td>
+      </tr>
+      
+      <tr>
+        <td>openai</td>
+        <td class="mono">net</td>
+        <td class="mono">openai.net</td>
+        <td class="yes">yes</td>
+        <td class="no">no</td>
+        <td class="num">-</td>
+        <td class="trunc" title="">-</td>
+        <td>-</td>
+        <td>-</td>
+        <td class="mono trunc" title="">
+          -</td>
+        <td class="no">no</td>
+        <td class="num">427</td>
+        <td class="mono trunc" title="91.201.42.93">
+          91.201.42.93</td>
+        <td class="trunc" title="">-</td>
+        <td class="mono trunc" title="">-</td>
+        <td class="err trunc" title="http: ClientConnectorError">http: ClientConnectorError</td>
+      </tr>
+      
+      <tr>
+        <td>facebook</td>
+        <td class="mono">net</td>
+        <td class="mono">facebook.net</td>
+        <td class="no">no</td>
+        <td class="no">no</td>
+        <td class="num">-</td>
+        <td class="trunc" title="">-</td>
+        <td>-</td>
+        <td>-</td>
+        <td class="mono trunc" title="">
+          -</td>
+        <td class="no">no</td>
+        <td class="num">24</td>
+        <td class="mono trunc" title="">
+          -</td>
+        <td class="trunc" title="">-</td>
+        <td class="mono trunc" title="">-</td>
+        <td class="err trunc" title="dns: gaierror">dns: gaierror</td>
+      </tr>
+      
+      <tr>
+        <td>sally</td>
+        <td class="mono">net</td>
+        <td class="mono">sally.net</td>
+        <td class="no">no</td>
+        <td class="no">no</td>
+        <td class="num">-</td>
+        <td class="trunc" title="">-</td>
+        <td>-</td>
+        <td>-</td>
+        <td class="mono trunc" title="">
+          -</td>
+        <td class="no">no</td>
+        <td class="num">1000</td>
+        <td class="mono trunc" title="">
+          -</td>
+        <td class="trunc" title="">-</td>
+        <td class="mono trunc" title="">-</td>
+        <td class="err trunc" title="dns: TimeoutError">dns: TimeoutError</td>
+      </tr>
+      
+    </tbody>
+  </table>
+  
+</div>
+</main>
+</body>
+</html>

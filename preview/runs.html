@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>History · Domain Scout</title>
+
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #fff; --ink: #1c2024; --muted: #6b7280;
+    --line: #e3e6ea; --accent: #2563eb; --ok: #167c4a; --warn: #9a6700; --bad: #b42318;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  header {
+    background: var(--card); border-bottom: 1px solid var(--line);
+    padding: 0 24px; display: flex; align-items: center; gap: 28px;
+  }
+  header .brand { font-weight: 650; font-size: 16px; padding: 16px 0; }
+  header a { color: var(--muted); text-decoration: none; padding: 16px 0; font-size: 14px; }
+  header a:hover { color: var(--ink); }
+  header a.on { color: var(--accent); box-shadow: inset 0 -2px 0 var(--accent); }
+  main { max-width: 1400px; margin: 0 auto; padding: 28px 24px 64px; }
+  h1 { font-size: 21px; margin: 0 0 4px; }
+  h2 { font-size: 15px; margin: 28px 0 10px; }
+  .sub { color: var(--muted); font-size: 13.5px; margin: 0 0 22px; }
+  .card {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 10px; padding: 20px; margin-bottom: 20px;
+  }
+  label { display: block; font-weight: 600; font-size: 13.5px; margin-bottom: 6px; }
+  .hint { color: var(--muted); font-weight: 400; font-size: 12.5px; }
+  input[type=text], textarea {
+    width: 100%; padding: 9px 11px; border: 1px solid var(--line);
+    border-radius: 7px; font-size: 14px; font-family: inherit; background: #fff;
+  }
+  textarea { min-height: 190px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; resize: vertical; }
+  input:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-color: var(--accent); }
+  .row { display: flex; gap: 20px; flex-wrap: wrap; }
+  .row > * { flex: 1 1 260px; }
+  .field { margin-bottom: 18px; }
+  .check { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+  .check input { width: 16px; height: 16px; }
+  button, .btn {
+    display: inline-block; background: var(--accent); color: #fff; border: 0;
+    padding: 9px 16px; border-radius: 7px; font-size: 14px; font-weight: 550;
+    cursor: pointer; text-decoration: none; font-family: inherit;
+  }
+  button:hover, .btn:hover { filter: brightness(1.08); }
+  .btn.secondary { background: #fff; color: var(--ink); border: 1px solid var(--line); }
+  .btn.danger { background: #fff; color: var(--bad); border: 1px solid #f0c6c2; }
+  .btn.sm { padding: 5px 11px; font-size: 13px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th {
+    text-align: left; font-size: 11.5px; text-transform: uppercase;
+    letter-spacing: .04em; color: var(--muted); font-weight: 600;
+    padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap;
+  }
+  td { padding: 8px 10px; border-bottom: 1px solid #f0f2f4; vertical-align: top; }
+  tbody tr:hover > td { background: #fafbfc; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .trunc { max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 20px;
+    font-size: 11.5px; font-weight: 600; background: #eef1f4; color: var(--muted);
+  }
+  .badge.done { background: #e7f5ee; color: var(--ok); }
+  .badge.running, .badge.queued { background: #fff4dc; color: var(--warn); }
+  .badge.failed, .badge.interrupted { background: #fdeceb; color: var(--bad); }
+  .yes { color: var(--ok); font-weight: 600; }
+  .no { color: var(--muted); }
+  .err { color: var(--bad); }
+  .stats { display: flex; flex-wrap: wrap; gap: 10px; }
+  .stat {
+    background: var(--card); border: 1px solid var(--line); border-radius: 9px;
+    padding: 12px 16px; min-width: 108px;
+  }
+  .stat .k { color: var(--muted); font-size: 11.5px; text-transform: uppercase; letter-spacing: .04em; }
+  .stat .v { font-size: 22px; font-weight: 650; font-variant-numeric: tabular-nums; }
+  details.expand > summary {
+    cursor: pointer; padding: 6px 0; font-size: 13px; color: var(--accent);
+    font-weight: 550; list-style: none; display: inline-flex; align-items: center; gap: 6px;
+  }
+  details.expand > summary::-webkit-details-marker { display: none; }
+  details.expand > summary::before { content: "▸"; font-size: 11px; }
+  details.expand[open] > summary::before { content: "▾"; }
+  .expand-body { padding: 6px 0 14px; }
+  .expand-row > td { background: #fbfcfd; padding-top: 0; }
+  .empty { color: var(--muted); text-align: center; padding: 40px 0; }
+  .kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px 24px; }
+  .kv .k { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+  .kv .v { font-size: 14px; }
+  .pager { display: flex; gap: 10px; align-items: center; margin-top: 18px; font-size: 13.5px; }
+  .banner {
+    border-left: 3px solid var(--accent); background: #eff4ff;
+    padding: 11px 15px; border-radius: 6px; font-size: 13.5px; margin-bottom: 18px;
+  }
+  .banner.bad { border-color: var(--bad); background: #fdeceb; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  form.inline { display: inline; }
+</style>
+</head>
+<body>
+<header>
+  <span class="brand">Domain Scout</span>
+  <a href="index.html" class="">New scan</a>
+  <a href="runs.html" class="on">History</a>
+</header>
+<main>
+<h1>Previous runs</h1>
+<p class="sub">
+  2 runs recorded. Expand a run for a quick
+  look at its domains, or open the summary page for the full findings and CSV export.
+</p>
+
+<div class="card" style="padding:6px 14px">
+  
+  <table>
+    <thead>
+      <tr>
+        <th>Run</th>
+        <th>Started</th>
+        <th>TLDs</th>
+        <th class="num">Domains</th>
+        <th class="num">Active</th>
+        <th class="num">Cached</th>
+        <th class="num">Elapsed</th>
+        <th>Status</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      
+      <tr>
+        <td><a href="/runs/2" class="mono">#2</a></td>
+        <td>2026-09-15 16:40:51 UTC</td>
+        <td class="mono">org</td>
+        <td class="num">
+          4
+        </td>
+        <td class="num">4</td>
+        <td class="num">0</td>
+        <td class="num">0.76s</td>
+        <td><span class="badge done">done</span></td>
+        <td><a href="/runs/2" class="btn secondary sm">Summary</a></td>
+      </tr>
+      <tr class="expand-row">
+        <td colspan="9">
+          <details class="expand">
+            <summary>Domains &amp; findings</summary>
+            <div class="expand-body">
+              
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Domain</th>
+                      <th>Resolved</th>
+                      <th>Active</th>
+                      <th class="num">Status</th>
+                      <th>Server</th>
+                      <th>Provider</th>
+                      <th>Title</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    
+                    <tr>
+                      <td class="mono">colorado.org</td>
+                      <td class="yes">yes</td>
+                      <td class="yes">yes</td>
+                      <td class="num">200</td>
+                      <td>other/unknown</td>
+                      <td>cloudflare</td>
+                      <td class="trunc" title="Colorado.org">Colorado.org</td>
+                    </tr>
+                    
+                    <tr>
+                      <td class="mono">denver.org</td>
+                      <td class="yes">yes</td>
+                      <td class="yes">yes</td>
+                      <td class="num">403</td>
+                      <td>-</td>
+                      <td>akamai</td>
+                      <td class="trunc" title="Access Denied">Access Denied</td>
+                    </tr>
+                    
+                    <tr>
+                      <td class="mono">example.org</td>
+                      <td class="yes">yes</td>
+                      <td class="yes">yes</td>
+                      <td class="num">200</td>
+                      <td>other/unknown</td>
+                      <td>cloudflare</td>
+                      <td class="trunc" title="Example Domain">Example Domain</td>
+                    </tr>
+                    
+                    <tr>
+                      <td class="mono">jim.org</td>
+                      <td class="yes">yes</td>
+                      <td class="yes">yes</td>
+                      <td class="num">200</td>
+                      <td>nginx</td>
+                      <td>-</td>
+                      <td class="trunc" title="Fundacja Jim – Wspieramy neuroatypowość, tworzymy świat akceptacji">Fundacja Jim – Wspieramy neuroatypowość, tworzymy świat akceptacji</td>
+                    </tr>
+                    
+                  </tbody>
+                </table>
+                <div class="actions" style="margin-top:12px">
+                  <a href="/runs/2" class="btn sm">Open full summary</a>
+                  
+                </div>
+              
+            </div>
+          </details>
+        </td>
+      </tr>
+      
+      <tr>
+        <td><a href="/runs/1" class="mono">#1</a></td>
+        <td>2026-09-15 16:40:48 UTC</td>
+        <td class="mono">com, net</td>
+        <td class="num">
+          20
+        </td>
+        <td class="num">16</td>
+        <td class="num">0</td>
+        <td class="num">2.11s</td>
+        <td><span class="badge done">done</span></td>
+        <td><a href="/runs/1" class="btn secondary sm">Summary</a></td>
+      </tr>
+      <tr class="expand-row">
+        <td colspan="9">
+          <details class="expand">
+            <summary>Domains &amp; findings</summary>
+            <div class="expand-body">
+              
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Domain</th>
+                      <th>Resolved</th>
+                      <th>Active</th>
+                      <th class="num">Status</th>
+                      <th>Server</th>
+                      <th>Provider</th>
+                      <th>Title</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    
+                    <tr>
+                      <td class="mono">anthropic.com</td>
+                      <td class="yes">yes</td>
+                      <td class="yes">yes</td>
+                      <td class="num">200</td>
+                      <td>other/unknown</td>
+                      <td>cloudflare</td>
+                      <td class="trunc" title="Home \ Anthropic">Home \ Anthropic</td>
+                    </tr>
+                    
+                    <tr>
+                      <td class="mono">anthropic.net</td>
+                      <td class="yes">yes</td>
+                      <td class="yes">yes</td>
+                      <td class="num">200</td>
+                      <td>apache</td>
+                      <td>-</td>
+                      <td class="trunc" title="">-</td>
+                    </tr>
+                    
+                    <tr>
+                      <td class="mono">claude.com</td>
+                      <td class="yes">yes</td>
+                      <td class="yes">yes</td>
+                      <td class="num">200</td>
+                      <td>other/unknown</td>
+                      <td>cloudflare</td>
+                      <td class="trunc" title="">-</td>
+                    </tr>
+                    
+                    <tr>
+                      <td class="mono">facebook.com</td>
+                      <td class="yes">yes</td>
+                      <td class="yes">yes</td>
+                      <td class="num">200</td>
+                      <td>-</td>
+                      <td>-</td>
+                      <td class="trunc" title="">-</td>
+                    </tr>
+                    
+                    <tr>
+                      <td class="mono">google.com</td>
+                      <td class="yes">yes</td>
+                      <td class="yes">yes</td>
+                      <td class="num">200</td>
+                      <td>other/unknown</td>
+                      <td>-</td>
+                      <td class="trunc" title="Google">Google</td>
+                    </tr>
+                    
+                    <tr>
+                      <td class="mono">google.net</td>
+                      <td class="yes">yes</td>
+                      <td class="yes">yes</td>
+                      <td class="num">200</td>
+                      <td>other/unknown</td>
+                      <td>-</td>
+                      <td class="trunc" title="Google">Google</td>
+                    </tr>
+                    
+                    <tr>
+                      <td class="mono">grant.com</td>
+                      <td class="yes">yes</td>
+                      <td class="yes">yes</td>
+                      <td class="num">200</td>
+                      <td>nginx</td>
+                      <td>-</td>
+                      <td class="trunc" title="grant.com | Venture">grant.com | Venture</td>
+                    </tr>
+                    
+                    <tr>
+                      <td class="mono">grant.net</td>
+                      <td class="yes">yes</td>
+                      <td class="yes">yes</td>
+                      <td class="num">200</td>
+                      <td>other/unknown</td>
+                      <td>-</td>
+                      <td class="trunc" title="grant.net">grant.net</td>
+                    </tr>
+                    
+                  </tbody>
+                </table>
+                <div class="actions" style="margin-top:12px">
+                  <a href="/runs/1" class="btn sm">Open full summary</a>
+                  
+                    <span class="hint">
+                      Showing 8 of 20
+                      domains, most active first.
+                    </span>
+                  
+                </div>
+              
+            </div>
+          </details>
+        </td>
+      </tr>
+      
+    </tbody>
+  </table>
+  
+</div>
+
+
+</main>
+</body>
+</html>
