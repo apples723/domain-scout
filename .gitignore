@@ -16,6 +16,10 @@ env/
 data/*.db
 data/*.sqlite
 data/*.sqlite3
+# SQLite WAL sidecar files
+data/*-wal
+data/*-shm
+# Legacy output format, retired in favour of the SQLite run history
 data/*.jsonl
 
 # OS / editor cruft

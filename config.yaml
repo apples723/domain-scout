@@ -1,5 +1,6 @@
 scanner:
-  # Only one scan job is allowed to run at a time.
+  # Only one scan job runs at a time. The web UI enforces this with a single
+  # background worker draining a queue; extra submissions show as "queued".
   job_concurrency: 1
 
   # Concurrency inside that single job.
@@ -10,7 +11,7 @@ scanner:
   connect_timeout_seconds: 1.0
   dns_timeout_seconds: 1.0
   max_body_bytes: 65536
-  user_agent: "DomainScout/1.0"
+  user_agent: "DomainScout/2.0"
 
   # Avoid re-checking recently tested domains.
   cache_ttl_seconds: 3600
@@ -25,10 +26,24 @@ scanner:
   follow_redirects: true
 
 storage:
+  # Holds the domain check cache and the full run history.
   sqlite_path: "./data/domain-scout.db"
 
 input:
+  # Used by the CLI, and to prefill the keywords box in the web UI.
   keywords_file: "./keywords.txt"
 
-output:
-  results_file: "./data/results.jsonl"
+web:
+  host: "0.0.0.0"
+  port: 8000
+
+  # Runs listed per page on the history view.
+  history_page_size: 25
+
+  # Rows shown in a history row's expander before linking to the full summary.
+  quick_summary_rows: 8
+
+  # Guard rails on submitted work, since one run fans out to
+  # keywords x TLDs concurrent requests.
+  max_keywords_per_run: 1000
+  max_tlds_per_run: 20
