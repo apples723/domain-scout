@@ -12,6 +12,8 @@ from dataclasses import dataclass, asdict, fields
 from typing import Callable, Iterable, Optional, Protocol
 
 import aiohttp
+import dns.asyncresolver
+import dns.resolver
 
 
 @dataclass
@@ -21,6 +23,7 @@ class Result:
     domain: str
     resolved: bool
     ip_addresses: list[str]
+    nameservers: list[str]
     active_html: bool
     url: Optional[str]
     status: Optional[int]
@@ -33,6 +36,7 @@ class Result:
     elapsed_ms: int
     cached: bool = False
     error: Optional[str] = None
+    nameserver_error: Optional[str] = None
 
     @classmethod
     def field_names(cls) -> list[str]:
@@ -170,6 +174,16 @@ async def resolve_domain(domain: str, timeout: float) -> list[str]:
     return await asyncio.wait_for(_lookup(), timeout=timeout)
 
 
+async def resolve_nameservers(domain: str, timeout: float) -> list[str]:
+    """Return the domain's NS record targets in a stable, display-friendly form."""
+    try:
+        answer = await dns.asyncresolver.resolve(domain, "NS", lifetime=timeout)
+    except dns.resolver.NoAnswer:
+        return []
+
+    return sorted({str(record.target).rstrip(".").lower() for record in answer})
+
+
 async def fetch_html(
     session: aiohttp.ClientSession, url: str, max_body: int, allow_redirects: bool
 ):
@@ -197,14 +211,24 @@ async def fetch_html(
         }
 
 
-def _failed_result(keyword: str, tld: str, domain: str, resolved: bool,
-                   ips: list[str], start: float, error: Optional[str]) -> Result:
+def _failed_result(
+    keyword: str,
+    tld: str,
+    domain: str,
+    resolved: bool,
+    ips: list[str],
+    nameservers: list[str],
+    start: float,
+    error: Optional[str],
+    nameserver_error: Optional[str],
+) -> Result:
     return Result(
         keyword=keyword,
         tld=tld,
         domain=domain,
         resolved=resolved,
         ip_addresses=ips,
+        nameservers=nameservers,
         active_html=False,
         url=None,
         status=None,
@@ -216,6 +240,7 @@ def _failed_result(keyword: str, tld: str, domain: str, resolved: bool,
         content_type=None,
         elapsed_ms=int((time.perf_counter() - start) * 1000),
         error=error,
+        nameserver_error=nameserver_error,
     )
 
 
@@ -237,15 +262,35 @@ async def check_domain(
         if cached:
             return cached
 
-    try:
-        ips = await resolve_domain(domain, cfg["dns_timeout_seconds"])
-    except Exception as e:
+    address_lookup, nameserver_lookup = await asyncio.gather(
+        resolve_domain(domain, cfg["dns_timeout_seconds"]),
+        resolve_nameservers(domain, cfg["dns_timeout_seconds"]),
+        return_exceptions=True,
+    )
+
+    if isinstance(nameserver_lookup, BaseException):
+        nameservers: list[str] = []
+        nameserver_error = f"nameserver: {type(nameserver_lookup).__name__}"
+    else:
+        nameservers = nameserver_lookup
+        nameserver_error = None
+
+    if isinstance(address_lookup, BaseException):
         result = _failed_result(
-            keyword, tld, domain, False, [], start, f"dns: {type(e).__name__}"
+            keyword,
+            tld,
+            domain,
+            False,
+            [],
+            nameservers,
+            start,
+            f"dns: {type(address_lookup).__name__}",
+            nameserver_error,
         )
         cache.cache_put(result)
         return result
 
+    ips = address_lookup
     last_error = None
     for scheme in cfg["schemes"]:
         try:
@@ -261,8 +306,10 @@ async def check_domain(
                 domain=domain,
                 resolved=True,
                 ip_addresses=ips,
+                nameservers=nameservers,
                 elapsed_ms=int((time.perf_counter() - start) * 1000),
                 error=None,
+                nameserver_error=nameserver_error,
                 **info,
             )
             cache.cache_put(result)
@@ -270,7 +317,17 @@ async def check_domain(
         except Exception as e:
             last_error = f"{scheme}: {type(e).__name__}"
 
-    result = _failed_result(keyword, tld, domain, True, ips, start, last_error)
+    result = _failed_result(
+        keyword,
+        tld,
+        domain,
+        True,
+        ips,
+        nameservers,
+        start,
+        last_error,
+        nameserver_error,
+    )
     cache.cache_put(result)
     return result
 

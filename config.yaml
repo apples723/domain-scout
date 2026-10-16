@@ -9,6 +9,7 @@ scanner:
 
   request_timeout_seconds: 2.5
   connect_timeout_seconds: 1.0
+  # Applies to both IP address resolution and NS record lookups.
   dns_timeout_seconds: 1.0
   max_body_bytes: 65536
   user_agent: "DomainScout/2.0"

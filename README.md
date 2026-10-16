@@ -1,9 +1,10 @@
 # Domain Scout
 
 Domain Scout takes a list of keywords, pairs each one with every TLD you give it,
-and checks whether the resulting domains resolve and serve a live website. It's
-built for quickly surveying a batch of candidate names and seeing which ones are
-already live, what they're running, and who's fronting them.
+and checks whether the resulting domains resolve, which nameservers answer for them,
+and whether they serve a live website. It's built for quickly surveying a batch
+of candidate names and seeing which ones are already live, what they're running,
+and who's fronting them.
 
 It ships two surfaces over one engine:
 
@@ -64,7 +65,7 @@ against `.net` and `.app` side by side.
 
 For every domain, Domain Scout records:
 
-1. DNS resolution and the resolved IP addresses.
+1. DNS resolution, resolved IP addresses, and NS records.
 2. HTTPS first, falling back to HTTP.
 3. Whether the response is an actual HTML page.
 4. HTTP status code and final redirect target.
@@ -74,6 +75,11 @@ For every domain, Domain Scout records:
    Netlify, and GitHub Pages, based on HTTP response fingerprints.
 8. The evidence behind each provider classification.
 9. Page title and content type.
+
+IP resolution and NS lookup run in parallel. A domain can have nameservers even
+when it has no website address, so nameserver results are recorded independently.
+NS lookup failures are exposed separately as `nameserver_error` and do not stop
+HTTP probing when IP resolution succeeds.
 
 Domain Scout deliberately avoids aggressive fingerprinting. Plenty of production
 servers hide or rewrite the `Server` header, so nginx/apache detection is

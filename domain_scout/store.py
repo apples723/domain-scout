@@ -22,15 +22,16 @@ from .engine import Result
 
 # Bump when the Result dataclass or cache payload shape changes. The cache is
 # disposable, so a mismatch just clears it; run history is never destroyed.
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 RESULT_COLUMNS = [
-    "keyword", "tld", "domain", "resolved", "ip_addresses", "active_html",
-    "url", "status", "server", "server_family", "provider", "provider_evidence",
-    "title", "content_type", "elapsed_ms", "cached", "error",
+    "keyword", "tld", "domain", "resolved", "ip_addresses", "nameservers",
+    "active_html", "url", "status", "server", "server_family", "provider",
+    "provider_evidence", "title", "content_type", "elapsed_ms", "cached",
+    "error", "nameserver_error",
 ]
 
-_JSON_COLUMNS = ("ip_addresses", "provider_evidence")
+_JSON_COLUMNS = ("ip_addresses", "nameservers", "provider_evidence")
 _BOOL_COLUMNS = ("resolved", "active_html", "cached")
 
 ACTIVE_STATUSES = ("queued", "running")
@@ -110,6 +111,7 @@ class Store:
                     domain            TEXT    NOT NULL,
                     resolved          INTEGER NOT NULL,
                     ip_addresses      TEXT    NOT NULL DEFAULT '[]',
+                    nameservers       TEXT    NOT NULL DEFAULT '[]',
                     active_html       INTEGER NOT NULL,
                     url               TEXT,
                     status            INTEGER,
@@ -121,7 +123,8 @@ class Store:
                     content_type      TEXT,
                     elapsed_ms        INTEGER NOT NULL DEFAULT 0,
                     cached            INTEGER NOT NULL DEFAULT 0,
-                    error             TEXT
+                    error             TEXT,
+                    nameserver_error  TEXT
                 );
 
                 CREATE INDEX IF NOT EXISTS idx_run_results_run
@@ -129,6 +132,23 @@ class Store:
                 CREATE INDEX IF NOT EXISTS idx_runs_visible
                     ON runs(deleted_at, id DESC);
             """)
+
+            # CREATE TABLE IF NOT EXISTS does not add columns to databases made
+            # by older releases. Preserve historical rows and backfill the new
+            # result fields with their safe defaults.
+            result_columns = {
+                row["name"]
+                for row in self.db.execute("PRAGMA table_info(run_results)")
+            }
+            if "nameservers" not in result_columns:
+                self.db.execute(
+                    "ALTER TABLE run_results "
+                    "ADD COLUMN nameservers TEXT NOT NULL DEFAULT '[]'"
+                )
+            if "nameserver_error" not in result_columns:
+                self.db.execute(
+                    "ALTER TABLE run_results ADD COLUMN nameserver_error TEXT"
+                )
 
             row = self.db.execute(
                 "SELECT value FROM schema_meta WHERE key = 'version'"

@@ -63,6 +63,7 @@
                       <th class="num">Status</th>
                       <th>Server</th>
                       <th>Provider</th>
+                      <th>Nameservers</th>
                       <th>Title</th>
                     </tr>
                   </thead>
@@ -75,6 +76,8 @@
                       <td class="num">{{ r.status or '-' }}</td>
                       <td>{{ r.server_family or '-' }}</td>
                       <td>{{ r.provider or '-' }}</td>
+                      <td class="mono trunc" title="{{ r.nameservers | join(', ') }}">
+                        {{ r.nameservers | join(', ') or '-' }}</td>
                       <td class="trunc" title="{{ r.title or '' }}">{{ r.title or '-' }}</td>
                     </tr>
                     {% endfor %}

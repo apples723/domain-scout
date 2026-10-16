@@ -38,9 +38,11 @@ def print_results_table(results: list[Result]) -> None:
         ("cached", lambda r: r.cached),
         ("ms", lambda r: r.elapsed_ms),
         ("ips", lambda r: r.ip_addresses),
+        ("nameservers", lambda r: r.nameservers),
         ("title", lambda r: r.title),
         ("url", lambda r: r.url),
         ("error", lambda r: r.error),
+        ("nameserver_error", lambda r: r.nameserver_error),
     ]
 
     rows = [[fmt(accessor(r)) for _, accessor in columns] for r in results]
