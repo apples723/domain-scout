@@ -114,7 +114,7 @@
         <th>Keyword</th><th>TLD</th><th>Domain</th><th>Resolved</th><th>Active</th>
         <th class="num">Status</th><th>Server</th><th>Family</th><th>Provider</th>
         <th>Evidence</th><th>Cached</th><th class="num">ms</th><th>IPs</th>
-        <th>Title</th><th>URL</th><th>Error</th>
+        <th>Nameservers</th><th>Title</th><th>URL</th><th>Error</th><th>NS Error</th>
       </tr>
     </thead>
     <tbody>
@@ -135,9 +135,13 @@
         <td class="num">{{ r.elapsed_ms }}</td>
         <td class="mono trunc" title="{{ r.ip_addresses | join(', ') }}">
           {{ r.ip_addresses | join(', ') or '-' }}</td>
+        <td class="mono trunc" title="{{ r.nameservers | join(', ') }}">
+          {{ r.nameservers | join(', ') or '-' }}</td>
         <td class="trunc" title="{{ r.title or '' }}">{{ r.title or '-' }}</td>
         <td class="mono trunc" title="{{ r.url or '' }}">{{ r.url or '-' }}</td>
         <td class="err trunc" title="{{ r.error or '' }}">{{ r.error or '-' }}</td>
+        <td class="err trunc" title="{{ r.nameserver_error or '' }}">
+          {{ r.nameserver_error or '-' }}</td>
       </tr>
       {% endfor %}
     </tbody>
